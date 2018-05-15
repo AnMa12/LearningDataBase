@@ -28,16 +28,16 @@ INSERT INTO TURIST VALUES(4, 'DN', 'DP', '1997-07-03');
 
 ACHIZITIONEAZA(#cod_turist, #cod_excursie, #data_start, data_end, data_achizitie, discount)
 DROP TABLE ACHIZITIONEAZA;
-INSERT INTO ACHIZITIONEAZA VALUES(1,1,'2015-12-04','2015-12-04','2015-02-05',1);
-INSERT INTO ACHIZITIONEAZA VALUES(2,2,'2015-12-04','2015-12-04','2015-04-05',1);
-INSERT INTO ACHIZITIONEAZA VALUES(3,7,'2015-12-04','2015-12-04','2015-01-18',1);
-INSERT INTO ACHIZITIONEAZA VALUES(3,8,'2015-12-04','2015-12-04','2015-08-04',1);
-INSERT INTO ACHIZITIONEAZA VALUES(2,5,'2015-12-04','2015-12-04','2016-01-05',1);
-INSERT INTO ACHIZITIONEAZA VALUES(4,3,'2015-12-04','2015-12-04','2015-01-18',1);
-INSERT INTO ACHIZITIONEAZA VALUES(1,2,'2015-12-04','2015-12-04','2015-08-04',1);
-INSERT INTO ACHIZITIONEAZA VALUES(2,1,'2015-12-04','2015-12-04','2016-01-05',1);
-INSERT INTO ACHIZITIONEAZA VALUES(1,4,'2015-12-04','2015-12-04','2016-01-05',1);
-INSERT INTO ACHIZITIONEAZA VALUES(4,4,'2015-12-04','2015-12-04','2016-01-05',1);
+INSERT INTO ACHIZITIONEAZA VALUES(1,1,'2015-12-04','2015-12-04','2015-02-05',0.12);
+INSERT INTO ACHIZITIONEAZA VALUES(2,2,'2015-12-04','2015-12-04','2015-04-05',0.234);
+INSERT INTO ACHIZITIONEAZA VALUES(3,7,'2015-12-04','2015-12-04','2015-01-18',0.123);
+INSERT INTO ACHIZITIONEAZA VALUES(3,8,'2015-12-04','2015-12-04','2015-08-04',0.345);
+INSERT INTO ACHIZITIONEAZA VALUES(2,5,'2015-12-04','2015-12-04','2016-01-05',0.32);
+INSERT INTO ACHIZITIONEAZA VALUES(4,3,'2015-12-04','2015-12-04','2015-01-18',0.324);
+INSERT INTO ACHIZITIONEAZA VALUES(1,2,'2015-12-04','2015-12-04','2015-08-04',0.9134);
+INSERT INTO ACHIZITIONEAZA VALUES(2,1,'2015-12-04','2015-12-04','2016-01-05',0.321);
+INSERT INTO ACHIZITIONEAZA VALUES(1,4,'2015-12-04','2015-12-04','2016-01-05',0.235);
+INSERT INTO ACHIZITIONEAZA VALUES(4,4,'2015-12-04','2015-12-04','2016-01-05',NULL);
 /*1. Sa se afiseze denumirea primei excursii achizitionate.
 trebuie sa sortam dupa data_achizitie si sa afisam doar prima valoare*/
 SELECT cod_turist, data_achizitie AS primaAchizitie
@@ -96,17 +96,49 @@ JOIN EXCURSIE
 ON ACHIZITIONEAZA.cod_excursie = EXCURSIE.id_excursie
 WHERE EXCURSIE.destinatie = 'AO';
 
+/*6. AfisaNi codul si numele turistilor care au achiziNionat excursii spre cel puNin doua
+destinaNii diferite.*/
+SELECT DISTINCT TURIST.id_turist, TURIST.nume,COUNT(*) AS numarExcursiiAchizitionate
+FROM TURIST JOIN ACHIZITIONEAZA
+ON TURIST.id_turist = ACHIZITIONEAZA.cod_turist
+GROUP BY cod_turist
+HAVING COUNT(*) >= 2;
 
-6. AfisaNi codul si numele turistilor care au achiziNionat excursii spre cel puNin doua
-destinaNii diferite.
-7. Sa se afiseze pentru fiecare agenNie, denumirea si profitul obNinut. (Profitul obNinut din
+/*7. Sa se afiseze pentru fiecare agenNie, denumirea si profitul obNinut. (Profitul obNinut din
 vânzarea unei excursii este pret – pret * discount Daca discountul este necunoscut
-profitul este preNul excursiei).
-8. Sa se afiseze denumirea si orasul pentru agenNiile care au cel puNin 3 excusii oferite la
-un preN mai mic decat 2000 euro.
-9. Sa se afiseze excursiile care nu au fost achiziNionate de catre nici un turist.
+profitul este preNul excursiei !!! OBSERVATIE PE NULL !!!).
+SELECT DISTINCT AGENTIE.denumire, SUM(EXCURSIE.pret) as profitAgentie
+FROM AGENTIE LEFT OUTER JOIN EXCURSIE
+ON AGENTIE.id_agentie = EXCURSIE.cod_agentie
+GROUP BY denumire;*/
+SELECT DISTINCT AGENTIE.denumire, SUM(EXCURSIE.pret  - EXCURSIE.pret * ACHIZITIONEAZA.discount) as profitAgentie
+/*observatie pe null!!!*/
+FROM AGENTIE LEFT OUTER JOIN EXCURSIE
+ON AGENTIE.id_agentie = EXCURSIE.cod_agentie
+JOIN ACHIZITIONEAZA 
+ON EXCURSIE.id_excursie = ACHIZITIONEAZA.cod_excursie
+GROUP BY denumire;
+
+/*8. Sa se afiseze denumirea si orasul pentru agenNiile care au cel puNin 3 excusii oferite la
+un preN mai mic decat 100.*/
+SELECT DISTINCT AGENTIE.denumire, AGENTIE.oras 
+FROM AGENTIE
+JOIN EXCURSIE
+ON AGENTIE.id_agentie = EXCURSIE.cod_agentie
+WHERE EXCURSIE.PRET < 100;
+
+/*9. Sa se afiseze excursiile care nu au fost achiziNionate de catre nici un turist.*/
+SELECT EXCURSIE.denumire FROM EXCURSIE
+WHERE EXCURSIE.id_excursie NOT IN (
+SELECT DISTINCT EXCURSIE.id_excursie
+FROM EXCURSIE JOIN ACHIZITIONEAZA
+ON EXCURSIE.id_excursie = ACHIZITIONEAZA.cod_excursie);
+
+
 10. AfisaNi informaNii despre excursii, inclusiv denumirea agenNiei. Pentru excursiile
 pentru care nu este cunoscuta agenNia se va afisa textul “agentie necunoscuta”.
+
+
 11. Sa se afiseze informaNii despre excursiile care au preNul mai mare decat excursia cu
 denumirea “Orasul luminilor” existenta în oferta agenNiei cu codul 10.
 12. Sa se obNina lista turistilor care au achiziNionat excursii cu o durata mai mare de 10
@@ -183,5 +215,5 @@ CREATE TABLE ACHIZITIONEAZA(
     data_start DATE NOT NULL,
     data_end DATE NOT NULL,
     data_achizitie DATE NOT NULL,
-    discount INT NOT NULL
+    discount FLOAT
 );
