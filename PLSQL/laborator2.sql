@@ -457,3 +457,121 @@ END;
 /
 SELECT employee_id FROM emp_***;
 ROLLBACK;
+
+--LAB 2 EXERCITII
+
+--ex 1 Mențineți într-o colecție codurile celor mai 
+--prost plătiți 5 angajați care nu câștigă comision.
+
+declare 
+TYPE tabelaangajat IS TABLE OF emp_mam%rowtype index by binary_integer;
+angajati tabelaangajat ;
+begin
+select *
+into angajati
+from (Select * from emp_frigooo
+order by salary asc)
+where rownum <=5;
+ for i in angajati.first .. angajati.last loop
+ dbms_output.put(angajati(i).employee_id);
+ end loop;
+ end;
+ /
+
+--facut cu cursoare
+DECLARE 
+    TYPE t_coduri IS TABLE OF employees.employee_id%TYPE;
+    lista_coduri t_coduri := t_coduri();
+    CURSOR c IS 
+        SELECT employee_id, salary
+        FROM employees e
+        WHERE e.commission_pct IS NOT NULL
+        ORDER BY e.salary ASC;
+BEGIN
+    FOR i IN c LOOP
+        EXIT WHEN c%ROWCOUNT>5 OR c%NOTFOUND;
+        lista_coduri.extend;
+        lista_coduri(lista_coduri.last) := i.employee_id;
+    END LOOP;
+END;
+/
+
+CREATE OR REPLACE TYPE tip_orase_mam IS VARRAY(10) OF VARCHAR(12);
+/
+CREATE TABLE excursie_mam ( cod_excurise NUMBER(4),
+                            denumire VARCHAR(20),
+                            orase tip_orase_mam,
+                            status VARCHAR(20));
+                        
+INSERT INTO excursie_mam 
+VALUES(1, 'A', tip_orase_mam('Aa','Ab'),'disponibila');
+    
+INSERT INTO excursie_mam 
+VALUES(2, 'B', tip_orase_mam('Ba'),'disponibila');
+    
+INSERT INTO excursie_mam 
+VALUES(3, 'C', tip_orase_mam('Ca','Cb','Cc'),'disponibila');
+    
+INSERT INTO excursie_mam 
+VALUES(4, 'D', tip_orase_mam('Da','Db'),'anulata');
+    
+INSERT INTO excursie_mam 
+VALUES(5, 'E', null,'anulata');
+    
+--2 definiti un tip de colectie 
+DECLARE
+    lista_orase tip_orase_mam := tip_orase_mam();
+BEGIN
+    --b) adaugati un oras nou in lista, care va fi ultimu 
+    --vizitat pentru orasu A
+    
+    --ne ajutam de lista_orase, luam datele din coloana orase
+    --si le punem in lista_orase
+    SELECT orase
+    INTO lista_orase
+    FROM excursie_mam e
+    WHERE e.denumire = 'A';
+
+    --parcurgem lista pentru a testa daca am 
+    --colectat datele cum trebuie
+    FOR i IN lista_orase.FIRST..lista_orase.LAST LOOP
+        DBMS_OUTPUT.PUT_LINE(lista_orase(i) || ' ');
+    END LOOP;
+    DBMS_OUTPUT.NEW_LINE;
+    
+    --extindem lista pentru a mai putea adauga
+    --un element pe pzitia lista_orase.LAST + 1
+    lista_orase.EXTEND(1,1);
+    lista_orase(lista_orase.COUNT) := 'Ac';
+    
+    --afisam iar lista pentru a testa daca
+    --adaugarea a functionat
+    FOR i IN lista_orase.FIRST..lista_orase.LAST LOOP
+        DBMS_OUTPUT.PUT_LINE(lista_orase(i) || ' ');
+    END LOOP;
+    DBMS_OUTPUT.NEW_LINE;
+    
+    UPDATE excursie_mam e
+    SET orase = lista_orase
+    WHERE e.denumire = 'A';
+    
+    --adaugati un oras nou in lista, ce va fi al doilea oras vizitat
+    --am dublat ultimul oras, pentru a permuta dupa orasele
+    lista_orase.EXTEND(1,lista_orase.COUNT);
+    FOR i IN REVERSE 3..lista_orase.LAST LOOP
+        lista_orase(i) := lista_orase(i-1); 
+    END LOOP;
+    lista_orase(2) := 'Oras';
+    
+    FOR i IN lista_orase.FIRST..lista_orase.LAST LOOP
+        DBMS_OUTPUT.PUT_LINE(lista_orase(i) || ' ');
+    END LOOP;
+    DBMS_OUTPUT.NEW_LINE;
+    
+    UPDATE excursie_mam e
+    SET orase = lista_orase
+    WHERE e.denumire = 'A';
+END;
+/
+
+SELECT * FROM excursie_mam
