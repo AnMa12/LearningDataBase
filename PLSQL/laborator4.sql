@@ -210,3 +210,16 @@ END factorial_mam;
 
 /*9. Afişaţi numele şi salariul angajaţilor al căror salariu este mai mare decât media tuturor
 salariilor. Media salariilor va fi obţinută prin apelarea unei funcţii stocate.*/
+CREATE OR REPLACE FUNCTION media_salarii_mam RETURN NUMBER IS
+    medie NUMBER;
+BEGIN
+    SELECT AVG(salary)
+    INTO medie
+    FROM employees;
+    RETURN medie;
+END media_salarii_mam;
+/
+
+SELECT last_name, salary
+FROM employees
+WHERE salary > media_salarii_mam;
